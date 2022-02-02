@@ -1,17 +1,17 @@
-use actix_web::{web, App, HttpServer, HttpResponse};
+use actix_web::{web, App, HttpResponse, HttpServer};
 use anyhow::Result;
-use barista::{init_baristas, Barista, retrieve_available_barista_id};
+use barista::{init_baristas, retrieve_available_barista_id, Barista};
 use serde_json::json;
 use std::collections::HashMap;
+use std::net::SocketAddr;
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::sync::mpsc::Sender;
 use tokio::sync::Mutex;
-use std::net::SocketAddr;
 use tokio::time::sleep;
-use std::time::Duration;
 
-pub mod websocket;
 pub mod barista;
+pub mod websocket;
 
 pub type PeerMap = Arc<Mutex<HashMap<SocketAddr, Sender<String>>>>;
 
@@ -19,9 +19,7 @@ pub async fn purchase_endpoint(
     data_baristas: web::Data<Arc<Mutex<Barista>>>,
     data_peer_map: web::Data<PeerMap>,
 ) -> HttpResponse {
-
-    let available_barista_id =
-        retrieve_available_barista_id(data_baristas.clone()).await;
+    let available_barista_id = retrieve_available_barista_id(data_baristas.clone()).await;
 
     if available_barista_id.is_none() {
         return HttpResponse::InternalServerError().json(json!({
@@ -40,14 +38,14 @@ pub async fn purchase_endpoint(
         println!("Sender: {:?}", data_senders);
         for data_sender in data_senders {
             data_sender
-            .send(
-                json!({
-                    "account": available_barista_id.unwrap(),
-                })
-                .to_string(),
-            )
-            .await
-            .unwrap();
+                .send(
+                    json!({
+                        "account": available_barista_id.unwrap(),
+                    })
+                    .to_string(),
+                )
+                .await
+                .unwrap();
         }
     });
 
@@ -56,11 +54,10 @@ pub async fn purchase_endpoint(
     }))
 }
 
-
 pub async fn run_server() -> Result<()> {
     let peer_map: PeerMap = Arc::new(Mutex::new(HashMap::new()));
     let barista = Arc::new(Mutex::new(init_baristas().await.unwrap()));
-    
+
     let peer_map_websocket = peer_map.clone();
     tokio::spawn(async move {
         websocket::init_websocket(peer_map_websocket).await;
@@ -68,15 +65,12 @@ pub async fn run_server() -> Result<()> {
 
     let peer_map_data = web::Data::new(peer_map.clone());
     let barista_data = web::Data::new(barista);
-    
+
     HttpServer::new(move || {
         App::new()
             .app_data(peer_map_data.clone())
             .app_data(barista_data.clone())
-            .route(
-                "/latte/purchase",
-                web::post().to(purchase_endpoint),
-            )
+            .route("/latte/purchase", web::post().to(purchase_endpoint))
     })
     .bind("localhost:8080")?
     .run()

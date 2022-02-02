@@ -20,15 +20,14 @@ pub async fn init_websocket(peer_map: PeerMap) {
         peer_map_mutex.insert(addr, sender);
 
         tokio::spawn(async move {
-            
             println!("Incoming TCP connection from: {}", addr);
 
             let mut ws_stream = tokio_tungstenite::accept_async(stream)
                 .await
                 .expect("Error during the websocket handshake occurred");
-                
+
             println!("WebSocket connection established: {}", addr);
-    
+
             let mut rx = ReceiverStream::new(receiver);
             while let Some(val) = rx.next().await {
                 println!("Sending: {}", addr);
