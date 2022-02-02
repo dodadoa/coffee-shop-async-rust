@@ -10,6 +10,8 @@ use tokio::sync::mpsc::Sender;
 use tokio::sync::Mutex;
 use tokio::time::sleep;
 
+use crate::barista::free_barista_id;
+
 pub mod barista;
 pub mod websocket;
 
@@ -45,10 +47,17 @@ pub async fn purchase_endpoint(
                 .await
                 .unwrap();
         }
+
+        free_barista_id(
+            data_baristas.clone(),
+            &available_barista_id.unwrap(),
+        )
+        .await;
+
     });
 
     HttpResponse::Ok().json(json!({
-        "message": format!("Wait from Barist's id {}", available_barista_id.unwrap())
+        "message": format!("Wait from Barista's id {}", available_barista_id.unwrap())
     }))
 }
 
@@ -68,7 +77,7 @@ pub async fn run_server() -> Result<()> {
         App::new()
             .app_data(peer_map_data.clone())
             .app_data(barista_data.clone())
-            .route("/latte/purchase", web::post().to(purchase_endpoint))
+            .route("/latte/purchase", web::get().to(purchase_endpoint))
     })
     .bind("localhost:8080")?
     .run()
