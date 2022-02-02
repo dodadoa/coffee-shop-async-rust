@@ -33,6 +33,12 @@ pub async fn purchase_endpoint(
         println!("Incoming Latte");
         sleep(Duration::from_millis(3000)).await;
 
+        free_barista_id(
+            data_baristas.clone(),
+            &available_barista_id.unwrap(),
+        )
+        .await;
+
         let data_sender_mutex = data_peer_map.lock().await;
         let data_senders = data_sender_mutex.values();
 
@@ -47,12 +53,6 @@ pub async fn purchase_endpoint(
                 .await
                 .unwrap();
         }
-
-        free_barista_id(
-            data_baristas.clone(),
-            &available_barista_id.unwrap(),
-        )
-        .await;
 
     });
 
