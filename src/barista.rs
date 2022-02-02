@@ -25,9 +25,6 @@ pub async fn retrieve_available_barista_id(
     if available.is_some() {
         *mutex_barista.get_mut(&available.unwrap()).unwrap() = false
     }
-
-    println!("{:?}", available);
-
     available
 }
 

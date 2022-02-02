@@ -30,7 +30,7 @@ pub async fn init_websocket(peer_map: PeerMap) {
 
             let mut rx = ReceiverStream::new(receiver);
             while let Some(val) = rx.next().await {
-                println!("Sending: {}", addr);
+                println!("Sending Latte to -> {}", addr);
                 ws_stream.send(Message::Text(val)).await.unwrap();
             }
         });

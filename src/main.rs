@@ -28,19 +28,17 @@ pub async fn purchase_endpoint(
     }
 
     tokio::spawn(async move {
+        println!("Incoming Latte");
         sleep(Duration::from_millis(3000)).await;
-
-        println!("Peer Map: {:?}", data_peer_map);
 
         let data_sender_mutex = data_peer_map.lock().await;
         let data_senders = data_sender_mutex.values();
 
-        println!("Sender: {:?}", data_senders);
         for data_sender in data_senders {
             data_sender
                 .send(
                     json!({
-                        "account": available_barista_id.unwrap(),
+                        "message": format!("Served by Barista's id {}", available_barista_id.unwrap()),
                     })
                     .to_string(),
                 )
@@ -50,7 +48,7 @@ pub async fn purchase_endpoint(
     });
 
     HttpResponse::Ok().json(json!({
-        "receiverAddress": available_barista_id.unwrap()
+        "message": format!("Wait from Barist's id {}", available_barista_id.unwrap())
     }))
 }
 
